@@ -25,7 +25,7 @@ from mashumaro.config import (
     TO_DICT_ADD_BY_ALIAS_FLAG,
     TO_DICT_ADD_OMIT_NONE_FLAG,
     BaseConfig,
-    SerializationStrategyValueType,
+    SerializationStrategyValueType, LOOSE_DESERIALIZE,
 )
 from mashumaro.core.const import Sentinel
 from mashumaro.core.helpers import ConfigValue
@@ -554,16 +554,29 @@ class CodeBuilder:
                 could_be_none=False if could_be_none else True,
             )
         )
-        if unpacked_value != "value":
-            self.add_line(f"value = d.get('{alias or fname}', MISSING)")
-            packed_value = "value"
-        elif has_default:
-            self.add_line(f"value = d.get('{alias or fname}', MISSING)")
-            packed_value = "value"
+        if self.is_code_generation_option_enabled(LOOSE_DESERIALIZE):
+            if unpacked_value != "value":
+                self.add_line(f"value = d.get('{alias}', d.get('{fname}', MISSING))")
+                packed_value = "value"
+            elif has_default:
+                self.add_line(f"value = d.get('{alias}', d.get('{fname}', MISSING))")
+                packed_value = "value"
+            else:
+                self.add_line(f"__{fname} = d.get('{alias}', d.get('{fname}', MISSING))")
+                packed_value = f"__{fname}"
+                unpacked_value = packed_value
         else:
-            self.add_line(f"__{fname} = d.get('{alias or fname}', MISSING)")
-            packed_value = f"__{fname}"
-            unpacked_value = packed_value
+            if unpacked_value != "value":
+                self.add_line(f"value = d.get('{alias or fname}', MISSING)")
+                packed_value = "value"
+            elif has_default:
+                self.add_line(f"value = d.get('{alias or fname}', MISSING)")
+                packed_value = "value"
+            else:
+                self.add_line(
+                    f"__{fname} = d.get('{alias or fname}', MISSING)")
+                packed_value = f"__{fname}"
+                unpacked_value = packed_value
         if not has_default:
             with self.indent(f"if {packed_value} is MISSING:"):
                 self.add_line(
