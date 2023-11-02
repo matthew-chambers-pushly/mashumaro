@@ -7,6 +7,7 @@ from mashumaro import DataClassDictMixin
 from mashumaro.config import (
     TO_DICT_ADD_BY_ALIAS_FLAG,
     TO_DICT_ADD_OMIT_NONE_FLAG,
+    LOOSE_DESERIALIZE,
     BaseConfig,
 )
 from mashumaro.exceptions import MissingField
@@ -176,3 +177,24 @@ def test_no_serialize_by_alias_with_serialize_by_alias_and_optional():
 
     assert DataClass(x=123).to_dict() == {"alias": 123}
     assert DataClass(x=None).to_dict() == {"alias": None}
+
+
+def test_by_field_with_loose_deserialize():
+    @dataclass
+    class DataClass(DataClassDictMixin):
+        a: int = field(metadata={"alias": "alias_a"})
+        b: Optional[int] = field(metadata={"alias": "alias_b"})
+
+
+        class Config(BaseConfig):
+            serialize_by_alias = True
+            code_generation_options = [
+                TO_DICT_ADD_BY_ALIAS_FLAG,
+                LOOSE_DESERIALIZE
+            ]
+
+    instance = DataClass(a=123, b=456)
+    assert DataClass.from_dict({"a": 123, "alias_b": 456}) == instance
+    assert instance.to_dict() == {"alias_a": 123, "alias_b": 456}
+    assert instance.to_dict(by_alias=False) == {"a": 123, "b": 456}
+
