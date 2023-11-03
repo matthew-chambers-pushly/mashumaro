@@ -11,7 +11,6 @@ __all__ = [
     "ADD_DIALECT_SUPPORT",
     "ADD_SERIALIZATION_CONTEXT",
     "SerializationStrategyValueType",
-    "LOOSE_DESERIALIZE"
 ]
 
 
@@ -27,7 +26,6 @@ CodeGenerationOption = Literal[
     "TO_DICT_ADD_OMIT_NONE_FLAG",
     "ADD_DIALECT_SUPPORT",
     "ADD_SERIALIZATION_CONTEXT",
-    "LOOSE_DESERIALIZE"
 ]
 
 
@@ -52,3 +50,5 @@ class BaseConfig:
     discriminator: Optional[Discriminator] = None
     lazy_compilation: bool = False
     sort_keys: bool = False
+    loose_deserialization: bool = False
+
